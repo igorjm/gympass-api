@@ -1,15 +1,28 @@
 import * as Yup from 'yup';
 
+import Registration from '../models/Registration';
+import Student from '../models/Student';
 import Plan from '../models/Plan';
-import User from '../models/User';
 
-class PlanController {
+class RegistrationController {
   async index(req, res) {
-    const plans = await Plan.findAll({
-      attributes: ['id', 'title', 'price', 'duration'],
+    const registrations = await Registration.findAll({
+      attributes: ['id', 'start_date', 'end_date', 'price'],
+      include: [
+        {
+          model: Student,
+          as: 'student',
+          attributes: ['id', 'name', 'email'],
+        },
+        {
+          model: Plan,
+          as: 'plan',
+          attributes: ['id', 'title']
+        },
+      ],
     });
 
-    return res.json(plans);
+    return res.json(registrations);
   }
 
   async store(req, res) {
@@ -22,8 +35,8 @@ class PlanController {
     }
 
     const schema = Yup.object().shape({
-      title: Yup.string().required(),
-      duration: Yup.number().required(),
+      start_date: Yup.dat().required(),
+      student_id: Yup.number().positive().required(),
       price: Yup.number().required(),
     });
 
@@ -31,7 +44,7 @@ class PlanController {
       return res.status(400).json({ error: 'Validation fails' });
     }
 
-    const { id, title, duration, price } = await Plan.create(req.body);
+    const { id, title, duration, price } = await Registration.create(req.body);
 
     return res.json({
       id,
@@ -52,7 +65,7 @@ class PlanController {
       return res.status(400).json({ error: 'Validation fails' });
     }
 
-    const { id, title, duration, price } = await Plan.update(req.body);
+    const { id, title, duration, price } = await Registration.update(req.body);
 
     return res.json({
       id,
@@ -61,21 +74,6 @@ class PlanController {
       price,
     });
   }
-
-  async delete(req, res) {
-    const { planId } = req.params;
-    const plan = await Plan.findByPk(planId);
-
-    if(!plan) {
-      return res.status(404).json({ error: 'This plan does not exists!' });
-    }
-
-    const { title } = plan;
-    await plan.destroy();
-
-    return res.json({ message: `Plan ${title} was deleted` });
-  }
-
 }
 
-export default PlanController;
+export default RegistrationController;

@@ -37,14 +37,20 @@ class RegistrationController {
     const schema = Yup.object().shape({
       start_date: Yup.dat().required(),
       student_id: Yup.number().positive().required(),
-      price: Yup.number().required(),
+      plan_id: Yup.number().positive().required(),
     });
 
     if (!(await schema.isValid(req.body))) {
       return res.status(400).json({ error: 'Validation fails' });
     }
 
-    const { id, title, duration, price } = await Registration.create(req.body);
+    const { start_date } = req.body;
+    const parsedDate = parseISO(start_date);
+
+    if (isBefore(parsedDate, new Date())) {
+      return res.status(400).json({ error: 'You cannot enroll in past dates' });
+    }
+
 
     return res.json({
       id,
